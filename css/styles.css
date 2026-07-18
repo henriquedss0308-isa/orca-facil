@@ -472,7 +472,7 @@ textarea {
 /* Logo upload */
 .provider-layout {
   display: grid;
-  grid-template-columns: 140px 1fr;
+  grid-template-columns: minmax(168px, 188px) 1fr;
   gap: 1.5rem;
   align-items: start;
 }
@@ -480,45 +480,177 @@ textarea {
 .logo-upload {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-  text-align: center;
+  align-items: stretch;
+  gap: 0.55rem;
+  width: 100%;
+  max-width: 188px;
 }
 
-.logo-upload__preview {
-  width: 120px;
-  height: 120px;
+.logo-upload__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.logo-upload__dropzone {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
   border: 1.5px dashed var(--color-border-strong);
   border-radius: var(--radius-md);
-  background: var(--color-surface-2);
+  background:
+    linear-gradient(180deg, var(--color-surface) 0%, var(--color-surface-2) 100%);
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    background var(--transition),
+    box-shadow var(--transition),
+    transform 100ms ease;
+  outline: none;
+}
+
+.logo-upload__dropzone:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.08);
+}
+
+.logo-upload__dropzone:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18);
+}
+
+.logo-upload__dropzone.is-dragover {
+  border-color: var(--color-primary);
+  border-style: solid;
+  background: var(--color-primary-soft);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+}
+
+.logo-upload__dropzone.has-logo {
+  border-style: solid;
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  cursor: default;
+}
+
+.logo-upload__dropzone.has-logo:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.logo-upload__frame {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  border-radius: inherit;
+  padding: 0.75rem;
 }
 
-.logo-upload__preview img {
-  width: 100%;
-  height: 100%;
+.logo-upload__img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
-  padding: 0.5rem;
+  object-position: center;
+  display: block;
 }
 
 .logo-upload__placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.35rem;
+  text-align: center;
   color: var(--color-text-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+}
+
+.logo-upload__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 0.2rem;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.logo-upload__dropzone:hover .logo-upload__icon,
+.logo-upload__dropzone:focus-visible .logo-upload__icon,
+.logo-upload__dropzone.is-dragover .logo-upload__icon {
+  background: #fff;
+  border-color: rgba(15, 118, 110, 0.25);
+  color: var(--color-primary-ink);
+}
+
+.logo-upload__cta {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  line-height: 1.25;
+}
+
+.logo-upload__dropzone:hover .logo-upload__cta,
+.logo-upload__dropzone:focus-visible .logo-upload__cta {
+  color: var(--color-primary-ink);
+}
+
+.logo-upload__sub {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  line-height: 1.3;
 }
 
 .logo-upload__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
-  justify-content: center;
+  gap: 0.4rem;
+  justify-content: stretch;
+}
+
+.logo-upload__actions .btn {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.logo-upload__hint {
+  margin: 0;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.logo-upload__error {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-danger);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.logo-upload.has-error .logo-upload__dropzone {
+  border-color: rgba(185, 28, 28, 0.55);
+  background: var(--color-danger-soft);
+}
+
+.logo-upload.has-error .logo-upload__dropzone:hover,
+.logo-upload.has-error .logo-upload__dropzone:focus-visible {
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
 }
 
 /* Badges */
@@ -1276,7 +1408,26 @@ textarea {
 
   .provider-layout {
     grid-template-columns: 1fr;
-    justify-items: center;
+    justify-items: stretch;
+  }
+
+  .logo-upload {
+    max-width: 280px;
+    margin-inline: auto;
+  }
+
+  .logo-upload__dropzone {
+    aspect-ratio: 16 / 10;
+    min-height: 140px;
+  }
+
+  .logo-upload__actions {
+    justify-content: center;
+  }
+
+  .logo-upload__hint,
+  .logo-upload__error {
+    text-align: center;
   }
 
   .item-add-form {

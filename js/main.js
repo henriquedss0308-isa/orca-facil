@@ -9,6 +9,13 @@
   const STORAGE_KEY = "orcafacil_quotes_v1";
   const PROVIDER_KEY = "orcafacil_provider_v1";
   const MAX_LOGO_BYTES = 1024 * 1024;
+  const ALLOWED_LOGO_TYPES = new Set([
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/svg+xml",
+  ]);
+  const ALLOWED_LOGO_EXT = /\.(png|jpe?g|webp|svg)$/i;
   const STATUS_LABELS = {
     rascunho: "Rascunho",
     enviado: "Enviado",
@@ -388,17 +395,65 @@
     const img = $("#logo-img");
     const placeholder = $("#logo-placeholder");
     const removeBtn = $("#logo-remove");
-    if (state.provider.logoDataUrl) {
+    const changeBtn = $("#logo-change");
+    const actions = $("#logo-actions");
+    const dropzone = $("#logo-dropzone");
+    const hasLogo = Boolean(state.provider.logoDataUrl);
+
+    if (hasLogo) {
       img.src = state.provider.logoDataUrl;
       img.hidden = false;
       placeholder.hidden = true;
-      removeBtn.hidden = false;
+      if (actions) actions.hidden = false;
+      if (removeBtn) removeBtn.hidden = false;
+      if (changeBtn) changeBtn.hidden = false;
+      dropzone?.classList.add("has-logo");
+      dropzone?.setAttribute(
+        "aria-label",
+        "Logotipo carregado. Use Trocar ou Remover para alterar."
+      );
     } else {
       img.removeAttribute("src");
       img.hidden = true;
       placeholder.hidden = false;
-      removeBtn.hidden = true;
+      if (actions) actions.hidden = true;
+      if (removeBtn) removeBtn.hidden = true;
+      if (changeBtn) changeBtn.hidden = true;
+      dropzone?.classList.remove("has-logo");
+      dropzone?.setAttribute("aria-label", "Clique para selecionar o logotipo da empresa");
     }
+  }
+
+  function clearLogoError() {
+    const root = document.querySelector(".logo-upload");
+    const error = $("#logo-error");
+    root?.classList.remove("has-error");
+    if (error) {
+      error.hidden = true;
+      error.textContent = "";
+    }
+  }
+
+  function showLogoError(message) {
+    const root = document.querySelector(".logo-upload");
+    const error = $("#logo-error");
+    root?.classList.add("has-error");
+    if (error) {
+      error.hidden = false;
+      error.textContent = message;
+    }
+  }
+
+  function isAllowedLogoFile(file) {
+    if (!file) return false;
+    if (file.type && ALLOWED_LOGO_TYPES.has(file.type)) return true;
+    // Alguns navegadores omitem MIME; fallback pela extensão
+    return ALLOWED_LOGO_EXT.test(file.name || "");
+  }
+
+  function openLogoPicker() {
+    const input = $("#logo-input");
+    if (input) input.click();
   }
 
   function updateDiscountFieldState() {
@@ -1473,14 +1528,17 @@
 
   function handleLogoUpload(file) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      showToast("Selecione um arquivo de imagem (PNG, JPG, WebP ou SVG).", "error");
+
+    if (!isAllowedLogoFile(file)) {
+      showLogoError("Formato inválido. Use PNG, JPG, WebP ou SVG.");
       return;
     }
     if (file.size > MAX_LOGO_BYTES) {
-      showToast("A logo deve ter no máximo 1 MB.", "error");
+      showLogoError("A imagem deve ter no máximo 1 MB.");
       return;
     }
+
+    clearLogoError();
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -1488,7 +1546,7 @@
       updateLogoUI();
       showToast("Logotipo carregado.", "success", 1800);
     };
-    reader.onerror = () => showToast("Não foi possível ler a imagem.", "error");
+    reader.onerror = () => showLogoError("Não foi possível ler a imagem.");
     reader.readAsDataURL(file);
   }
 
@@ -1578,13 +1636,56 @@
     });
 
     // Logo
-    $("#logo-input").addEventListener("change", (e) => {
+    const logoInput = $("#logo-input");
+    const logoDropzone = $("#logo-dropzone");
+    const logoChange = $("#logo-change");
+    const logoRemove = $("#logo-remove");
+
+    logoInput.addEventListener("change", (e) => {
       const file = e.target.files?.[0];
       handleLogoUpload(file);
       e.target.value = "";
     });
-    $("#logo-remove").addEventListener("click", () => {
+
+    logoDropzone.addEventListener("click", () => {
+      if (state.provider.logoDataUrl) return;
+      openLogoPicker();
+    });
+
+    logoDropzone.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      openLogoPicker();
+    });
+
+    ["dragenter", "dragover"].forEach((type) => {
+      logoDropzone.addEventListener(type, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        logoDropzone.classList.add("is-dragover");
+      });
+    });
+
+    ["dragleave", "dragend"].forEach((type) => {
+      logoDropzone.addEventListener(type, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        logoDropzone.classList.remove("is-dragover");
+      });
+    });
+
+    logoDropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      logoDropzone.classList.remove("is-dragover");
+      const file = e.dataTransfer?.files?.[0];
+      handleLogoUpload(file);
+    });
+
+    logoChange.addEventListener("click", () => openLogoPicker());
+    logoRemove.addEventListener("click", () => {
       state.provider.logoDataUrl = "";
+      clearLogoError();
       updateLogoUI();
       showToast("Logotipo removido.", "info", 1600);
     });

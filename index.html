@@ -184,21 +184,42 @@
             <div class="panel__body">
               <div class="provider-layout">
                 <div class="logo-upload">
-                  <div class="logo-upload__preview" id="logo-preview">
-                    <span class="logo-upload__placeholder" id="logo-placeholder">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                      Logo
-                    </span>
-                    <img id="logo-img" alt="Logotipo da empresa" hidden />
+                  <span class="logo-upload__label" id="logo-label">Logotipo</span>
+                  <div
+                    class="logo-upload__dropzone"
+                    id="logo-dropzone"
+                    role="button"
+                    tabindex="0"
+                    aria-labelledby="logo-label"
+                    aria-describedby="logo-hint"
+                    aria-controls="logo-input"
+                  >
+                    <div class="logo-upload__frame" id="logo-preview">
+                      <span class="logo-upload__placeholder" id="logo-placeholder">
+                        <span class="logo-upload__icon" aria-hidden="true">
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 16V4m0 0l-4 4m4-4l4 4" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M4 14v2a4 4 0 004 4h8a4 4 0 004-4v-2" stroke-linecap="round"/>
+                          </svg>
+                        </span>
+                        <span class="logo-upload__cta">Clique para adicionar</span>
+                        <span class="logo-upload__sub">ou arraste a imagem aqui</span>
+                      </span>
+                      <img id="logo-img" class="logo-upload__img" alt="Logotipo da empresa" hidden />
+                    </div>
                   </div>
-                  <div class="logo-upload__actions">
-                    <label class="btn btn--ghost btn--sm" for="logo-input">
-                      Carregar logo
-                    </label>
-                    <input type="file" id="logo-input" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden />
-                    <button type="button" class="btn btn--ghost btn--sm text-danger" id="logo-remove" hidden>Remover</button>
+                  <input
+                    type="file"
+                    id="logo-input"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg"
+                    hidden
+                  />
+                  <div class="logo-upload__actions" id="logo-actions" hidden>
+                    <button type="button" class="btn btn--secondary btn--sm" id="logo-change">Trocar</button>
+                    <button type="button" class="btn btn--ghost btn--sm text-danger" id="logo-remove">Remover</button>
                   </div>
-                  <p class="field-hint">PNG, JPG, WebP ou SVG · máx. 1 MB · PNG/JPG recomendados para PDF</p>
+                  <p class="field-hint logo-upload__hint" id="logo-hint">PNG, JPG, WebP ou SVG · máx. 1 MB</p>
+                  <p class="logo-upload__error" id="logo-error" role="alert" hidden></p>
                 </div>
                 <div class="form-grid">
                   <div class="field field--full">
