@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="OrçaFácil — Gerador de orçamentos profissionais para prestadores de serviços. Crie, salve e exporte orçamentos em PDF." />
+  <meta name="theme-color" content="#0f766e" />
+  <title>OrçaFácil — Orçamentos profissionais em minutos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='white' font-size='16' font-family='system-ui' font-weight='700'%3EO%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
+
+  <!-- Toast notifications -->
+  <div id="toast-container" class="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Confirm modal -->
+  <div id="confirm-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" hidden>
+    <div class="modal__backdrop" data-close-modal></div>
+    <div class="modal__panel">
+      <h2 id="confirm-title" class="modal__title">Confirmar exclusão</h2>
+      <p id="confirm-message" class="modal__message">Tem certeza? Esta ação não pode ser desfeita.</p>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="confirm-cancel" data-close-modal>Cancelar</button>
+        <button type="button" class="btn btn--danger" id="confirm-ok">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Item edit modal -->
+  <div id="item-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="item-modal-title" hidden>
+    <div class="modal__backdrop" data-close-modal></div>
+    <div class="modal__panel modal__panel--form">
+      <h2 id="item-modal-title" class="modal__title">Editar item</h2>
+      <form id="item-edit-form" class="form-grid" novalidate>
+        <div class="field field--full">
+          <label for="edit-item-desc">Descrição <span class="req">*</span></label>
+          <input type="text" id="edit-item-desc" required maxlength="200" autocomplete="off" />
+          <span class="field-error" id="edit-item-desc-error" hidden></span>
+        </div>
+        <div class="field">
+          <label for="edit-item-qty">Quantidade <span class="req">*</span></label>
+          <input type="number" id="edit-item-qty" min="0.01" step="0.01" required />
+          <span class="field-error" id="edit-item-qty-error" hidden></span>
+        </div>
+        <div class="field">
+          <label for="edit-item-price">Valor unitário (R$) <span class="req">*</span></label>
+          <input type="number" id="edit-item-price" min="0" step="0.01" required />
+          <span class="field-error" id="edit-item-price-error" hidden></span>
+        </div>
+        <div class="modal__actions field--full">
+          <button type="button" class="btn btn--ghost" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn--primary">Salvar item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <header class="app-header no-print">
+    <div class="app-header__inner">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="8" fill="currentColor"/>
+            <path d="M8 18.5V9.5h3.2c1.85 0 3.05 1.05 3.05 2.55 0 1.05-.6 1.9-1.55 2.25L15.1 18.5h-2.15l-2-3.85H10.1V18.5H8zm2.1-5.55h1.05c.75 0 1.2-.4 1.2-1.05s-.45-1-1.2-1H10.1v2.05zM16.4 18.5l2.35-9h2.2l2.35 9h-2.15l-.4-1.7h-2.2l-.4 1.7H16.4zm2.75-3.4h1.4l-.7-2.85-.7 2.85z" fill="white"/>
+          </svg>
+        </span>
+        <div class="brand__text">
+          <strong class="brand__name">OrçaFácil</strong>
+          <span class="brand__tag">Orçamentos profissionais</span>
+        </div>
+      </div>
+
+      <nav class="app-nav" aria-label="Navegação principal">
+        <button type="button" class="nav-btn is-active" data-view="editor" aria-current="page">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Editor
+        </button>
+        <button type="button" class="nav-btn" data-view="preview">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Visualizar
+        </button>
+        <button type="button" class="nav-btn" data-view="history">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Histórico
+        </button>
+      </nav>
+
+      <div class="header-actions">
+        <button type="button" class="btn btn--ghost btn--sm" id="btn-demo" title="Carregar dados de demonstração">
+          Demo
+        </button>
+        <button type="button" class="btn btn--primary btn--sm" id="btn-save-header">
+          Salvar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" class="app-main">
+    <!-- ========== EDITOR ========== -->
+    <section id="view-editor" class="view is-active" aria-label="Editor de orçamento">
+      <div class="page-toolbar no-print">
+        <div class="page-toolbar__left">
+          <h1 class="page-title">Novo orçamento</h1>
+          <p class="page-subtitle" id="editor-subtitle">Preencha os dados e gere um documento profissional</p>
+        </div>
+        <div class="page-toolbar__right">
+          <button type="button" class="btn btn--ghost" id="btn-new">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Novo
+          </button>
+          <button type="button" class="btn btn--secondary" id="btn-duplicate" disabled title="Salve o orçamento antes de duplicar">
+            Duplicar
+          </button>
+          <button type="button" class="btn btn--primary" id="btn-preview-go">
+            Visualizar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="editor-grid">
+        <!-- Meta / status -->
+        <aside class="panel panel--sticky">
+          <div class="panel__head">
+            <h2 class="panel__title">Orçamento</h2>
+          </div>
+          <div class="panel__body form-stack">
+            <div class="field">
+              <label for="quote-number">Número</label>
+              <input type="text" id="quote-number" readonly class="input-readonly" aria-describedby="quote-number-hint" />
+              <span id="quote-number-hint" class="field-hint">Gerado automaticamente</span>
+            </div>
+            <div class="field">
+              <label for="quote-date">Data</label>
+              <input type="date" id="quote-date" required />
+            </div>
+            <div class="field">
+              <label for="quote-validity">Validade</label>
+              <input type="date" id="quote-validity" />
+            </div>
+            <div class="field">
+              <label for="quote-status">Status</label>
+              <select id="quote-status">
+                <option value="rascunho">Rascunho</option>
+                <option value="enviado">Enviado</option>
+                <option value="aprovado">Aprovado</option>
+                <option value="recusado">Recusado</option>
+              </select>
+            </div>
+            <div class="totals-card" aria-live="polite">
+              <div class="totals-card__row">
+                <span>Subtotal</span>
+                <strong id="summary-subtotal">R$ 0,00</strong>
+              </div>
+              <div class="totals-card__row totals-card__row--muted">
+                <span>Desconto</span>
+                <span id="summary-discount">− R$ 0,00</span>
+              </div>
+              <div class="totals-card__row totals-card__row--muted">
+                <span>Acréscimo</span>
+                <span id="summary-surcharge">+ R$ 0,00</span>
+              </div>
+              <div class="totals-card__row totals-card__row--total">
+                <span>Total</span>
+                <strong id="summary-total">R$ 0,00</strong>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="editor-main">
+          <!-- Prestador -->
+          <section class="panel" aria-labelledby="provider-heading">
+            <div class="panel__head">
+              <h2 id="provider-heading" class="panel__title">Dados do prestador</h2>
+              <span class="badge badge--soft">Sua empresa</span>
+            </div>
+            <div class="panel__body">
+              <div class="provider-layout">
+                <div class="logo-upload">
+                  <div class="logo-upload__preview" id="logo-preview">
+                    <span class="logo-upload__placeholder" id="logo-placeholder">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                      Logo
+                    </span>
+                    <img id="logo-img" alt="Logotipo da empresa" hidden />
+                  </div>
+                  <div class="logo-upload__actions">
+                    <label class="btn btn--ghost btn--sm" for="logo-input">
+                      Carregar logo
+                    </label>
+                    <input type="file" id="logo-input" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden />
+                    <button type="button" class="btn btn--ghost btn--sm text-danger" id="logo-remove" hidden>Remover</button>
+                  </div>
+                  <p class="field-hint">PNG, JPG, WebP ou SVG · máx. 1 MB · PNG/JPG recomendados para PDF</p>
+                </div>
+                <div class="form-grid">
+                  <div class="field field--full">
+                    <label for="provider-name">Nome ou empresa <span class="req">*</span></label>
+                    <input type="text" id="provider-name" required maxlength="120" autocomplete="organization" placeholder="Ex.: Silva Reformas Ltda." />
+                    <span class="field-error" id="provider-name-error" hidden></span>
+                  </div>
+                  <div class="field">
+                    <label for="provider-doc">CPF / CNPJ</label>
+                    <input type="text" id="provider-doc" maxlength="18" inputmode="numeric" placeholder="Opcional" autocomplete="off" />
+                  </div>
+                  <div class="field">
+                    <label for="provider-phone">Telefone</label>
+                    <input type="tel" id="provider-phone" maxlength="20" placeholder="(11) 99999-0000" autocomplete="tel" />
+                  </div>
+                  <div class="field">
+                    <label for="provider-email">E-mail</label>
+                    <input type="email" id="provider-email" maxlength="120" placeholder="contato@empresa.com" autocomplete="email" />
+                    <span class="field-error" id="provider-email-error" hidden></span>
+                  </div>
+                  <div class="field field--full">
+                    <label for="provider-address">Endereço</label>
+                    <input type="text" id="provider-address" maxlength="200" placeholder="Rua, número, bairro, cidade — UF" autocomplete="street-address" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Cliente -->
+          <section class="panel" aria-labelledby="client-heading">
+            <div class="panel__head">
+              <h2 id="client-heading" class="panel__title">Dados do cliente</h2>
+            </div>
+            <div class="panel__body form-grid">
+              <div class="field field--full">
+                <label for="client-name">Nome <span class="req">*</span></label>
+                <input type="text" id="client-name" required maxlength="120" autocomplete="name" placeholder="Nome completo ou razão social" />
+                <span class="field-error" id="client-name-error" hidden></span>
+              </div>
+              <div class="field">
+                <label for="client-doc">CPF / CNPJ</label>
+                <input type="text" id="client-doc" maxlength="18" inputmode="numeric" placeholder="Opcional" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label for="client-phone">Telefone</label>
+                <input type="tel" id="client-phone" maxlength="20" placeholder="(11) 98888-0000" autocomplete="tel" />
+              </div>
+              <div class="field">
+                <label for="client-email">E-mail</label>
+                <input type="email" id="client-email" maxlength="120" placeholder="cliente@email.com" autocomplete="email" />
+                <span class="field-error" id="client-email-error" hidden></span>
+              </div>
+              <div class="field field--full">
+                <label for="client-address">Endereço</label>
+                <input type="text" id="client-address" maxlength="200" placeholder="Rua, número, bairro, cidade — UF" autocomplete="street-address" />
+              </div>
+            </div>
+          </section>
+
+          <!-- Itens -->
+          <section class="panel" aria-labelledby="items-heading">
+            <div class="panel__head">
+              <h2 id="items-heading" class="panel__title">Itens do orçamento</h2>
+              <span class="badge" id="items-count">0 itens</span>
+            </div>
+            <div class="panel__body">
+              <form id="item-add-form" class="item-add-form" novalidate>
+                <div class="field item-add-form__desc">
+                  <label for="item-desc">Descrição <span class="req">*</span></label>
+                  <input type="text" id="item-desc" maxlength="200" placeholder="Ex.: Instalação elétrica completa" autocomplete="off" />
+                </div>
+                <div class="field">
+                  <label for="item-qty">Qtd. <span class="req">*</span></label>
+                  <input type="number" id="item-qty" min="0.01" step="0.01" value="1" />
+                </div>
+                <div class="field">
+                  <label for="item-price">Valor unit. (R$) <span class="req">*</span></label>
+                  <input type="number" id="item-price" min="0" step="0.01" placeholder="0,00" />
+                </div>
+                <div class="field item-add-form__action">
+                  <label class="sr-only" for="btn-add-item">Adicionar</label>
+                  <button type="submit" class="btn btn--primary" id="btn-add-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    Adicionar
+                  </button>
+                </div>
+              </form>
+              <p class="field-error" id="item-form-error" hidden></p>
+
+              <div class="table-wrap">
+                <table class="data-table" id="items-table" aria-label="Lista de itens">
+                  <thead>
+                    <tr>
+                      <th scope="col">Descrição</th>
+                      <th scope="col" class="col-num">Qtd.</th>
+                      <th scope="col" class="col-num">Unitário</th>
+                      <th scope="col" class="col-num">Subtotal</th>
+                      <th scope="col" class="col-actions no-print"><span class="sr-only">Ações</span></th>
+                    </tr>
+                  </thead>
+                  <tbody id="items-tbody">
+                    <!-- filled by JS -->
+                  </tbody>
+                </table>
+                <div class="empty-state" id="items-empty">
+                  <div class="empty-state__icon" aria-hidden="true">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+                  </div>
+                  <p class="empty-state__title">Nenhum item adicionado</p>
+                  <p class="empty-state__text">Inclua serviços ou produtos para calcular o orçamento.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Valores -->
+          <section class="panel" aria-labelledby="values-heading">
+            <div class="panel__head">
+              <h2 id="values-heading" class="panel__title">Valores e ajustes</h2>
+            </div>
+            <div class="panel__body form-grid form-grid--3">
+              <div class="field">
+                <label for="discount-type">Tipo de desconto</label>
+                <select id="discount-type">
+                  <option value="none">Sem desconto</option>
+                  <option value="percent">Porcentagem (%)</option>
+                  <option value="fixed">Valor fixo (R$)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="discount-value">Desconto</label>
+                <input type="number" id="discount-value" min="0" step="0.01" value="0" disabled />
+                <span class="field-error" id="discount-value-error" hidden></span>
+              </div>
+              <div class="field">
+                <label for="surcharge-value">Acréscimo (R$)</label>
+                <input type="number" id="surcharge-value" min="0" step="0.01" value="0" placeholder="0,00" />
+                <span class="field-error" id="surcharge-value-error" hidden></span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Infos adicionais -->
+          <section class="panel" aria-labelledby="extra-heading">
+            <div class="panel__head">
+              <h2 id="extra-heading" class="panel__title">Informações adicionais</h2>
+            </div>
+            <div class="panel__body form-grid">
+              <div class="field">
+                <label for="payment-terms">Condições de pagamento</label>
+                <input type="text" id="payment-terms" maxlength="200" placeholder="Ex.: 50% na aprovação, 50% na entrega" />
+              </div>
+              <div class="field">
+                <label for="execution-deadline">Prazo de execução</label>
+                <input type="text" id="execution-deadline" maxlength="120" placeholder="Ex.: 15 dias úteis após aprovação" />
+              </div>
+              <div class="field field--full">
+                <label for="notes">Observações</label>
+                <textarea id="notes" rows="3" maxlength="800" placeholder="Garantias, materiais inclusos, exclusões ou outras observações importantes..."></textarea>
+              </div>
+            </div>
+          </section>
+
+          <div class="editor-footer-actions no-print">
+            <button type="button" class="btn btn--ghost text-danger" id="btn-delete-current" disabled>
+              Excluir orçamento
+            </button>
+            <div class="editor-footer-actions__right">
+              <button type="button" class="btn btn--secondary" id="btn-save">Salvar orçamento</button>
+              <button type="button" class="btn btn--primary" id="btn-save-preview">Salvar e visualizar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PREVIEW ========== -->
+    <section id="view-preview" class="view" aria-label="Visualização do orçamento" hidden>
+      <div class="page-toolbar no-print">
+        <div class="page-toolbar__left">
+          <h1 class="page-title">Visualização</h1>
+          <p class="page-subtitle">Documento pronto para imprimir ou exportar em PDF</p>
+        </div>
+        <div class="page-toolbar__right">
+          <button type="button" class="btn btn--ghost" id="btn-back-editor">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Editar
+          </button>
+          <button type="button" class="btn btn--secondary" id="btn-print">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Imprimir
+          </button>
+          <button type="button" class="btn btn--primary" id="btn-pdf">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Gerar PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="preview-stage">
+        <article class="quote-doc" id="quote-document" aria-label="Documento do orçamento">
+          <!-- filled by JS -->
+        </article>
+      </div>
+    </section>
+
+    <!-- ========== HISTORY ========== -->
+    <section id="view-history" class="view" aria-label="Histórico de orçamentos" hidden>
+      <div class="page-toolbar no-print">
+        <div class="page-toolbar__left">
+          <h1 class="page-title">Histórico</h1>
+          <p class="page-subtitle">Orçamentos salvos neste navegador</p>
+        </div>
+        <div class="page-toolbar__right">
+          <button type="button" class="btn btn--primary" id="btn-history-new">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Novo orçamento
+          </button>
+        </div>
+      </div>
+
+      <div class="history-filters panel no-print">
+        <div class="panel__body history-filters__row">
+          <div class="field field--grow">
+            <label for="history-search">Pesquisar</label>
+            <input type="search" id="history-search" placeholder="Cliente ou número do orçamento..." autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="history-status">Status</label>
+            <select id="history-status">
+              <option value="all">Todos</option>
+              <option value="rascunho">Rascunho</option>
+              <option value="enviado">Enviado</option>
+              <option value="aprovado">Aprovado</option>
+              <option value="recusado">Recusado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="history-list" class="history-list" role="list"></div>
+
+      <div class="empty-state empty-state--lg" id="history-empty" hidden>
+        <div class="empty-state__icon" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+        </div>
+        <p class="empty-state__title">Nenhum orçamento encontrado</p>
+        <p class="empty-state__text">Salve um orçamento no editor ou carregue a demonstração para começar.</p>
+        <div class="empty-state__actions">
+          <button type="button" class="btn btn--primary" id="btn-empty-new">Criar orçamento</button>
+          <button type="button" class="btn btn--secondary" id="btn-empty-demo">Carregar demonstração</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer no-print">
+    <p>
+      <strong>OrçaFácil</strong> — projeto demonstrativo de portfólio.
+      Todos os dados ficam apenas no seu navegador (localStorage). Nenhuma informação é enviada a servidores.
+    </p>
+  </footer>
+
+  <!-- html2pdf via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
